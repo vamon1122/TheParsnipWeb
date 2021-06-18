@@ -258,6 +258,45 @@ namespace ParsnipData.Media
             return oldestUncompressedVideo;
         }
 
+        public bool UpdateOriginalDir()
+        {
+            if (Id != default)
+            {
+                try
+                {
+                    using (var conn = new SqlConnection(ParsnipData.Parsnip.ParsnipConnectionString))
+                    {
+                        using (var updateMedia = new SqlCommand("video_UPDATE_original_dir", conn))
+                        {
+                            updateMedia.CommandType = CommandType.StoredProcedure;
+
+                            updateMedia.Parameters.AddWithValue("media_id", Id.ToString());
+
+                            if (!string.IsNullOrEmpty(VideoData.OriginalFileDir))
+                                updateMedia.Parameters.AddWithValue("original_dir", VideoData.OriginalFileDir);
+
+                            conn.Open();
+                            updateMedia.ExecuteNonQuery();
+                        }
+                    }
+                }
+                catch (Exception e)
+                {
+                    string error =
+                        string.Format("There was an error whilst updating media: {0}", e);
+                    Debug.WriteLine(error);
+                    new LogEntry(Log.General) { Text = error };
+                    return false;
+                }
+                return true;
+            }
+            else
+            {
+                throw new System.InvalidOperationException(
+                    "Media cannot be updated. Media must be inserted into the database before it can be updated!");
+            }
+        }
+
         public bool UpdateMetadata()
         {
             if (Id != default)
